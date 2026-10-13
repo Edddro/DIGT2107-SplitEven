@@ -1,13 +1,17 @@
-package model;
+package ca.spliteven.digt2107spliteven.model;
 
 import java.time.Instant;
+import java.util.List;
 
-public class Member {
+/**
+ * Used to create a group that holds Member Expenses.*/
+public class GroupModel {
     final long id;
     final long creationTime;
     String name;
+    List<MemberModel> members;
 
-    Member(String name) {
+    GroupModel(String name) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null or empty");
         }
@@ -15,4 +19,5 @@ public class Member {
         this.creationTime = Instant.now().toEpochMilli();
         this.name = name;
     }
+
 }

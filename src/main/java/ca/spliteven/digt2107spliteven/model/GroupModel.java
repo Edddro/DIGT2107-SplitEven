@@ -22,4 +22,20 @@ public class GroupModel {
         this.name = name;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<MemberModel> getMembers() {
+        return members;
+    }
+
+    void addMember(MemberModel member) {
+        this.members.add(member);
+    }
+
 }

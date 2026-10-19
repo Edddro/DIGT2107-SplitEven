@@ -1,0 +1,102 @@
+package ca.spliteven.digt2107spliteven.model;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * One expense paid by a member and shared by one or more members (GE-002,
+ * FR-004).
+ */
+public class ExpenseModel {
+
+    private static final AtomicLong SEQUENCE = new AtomicLong(Instant.now().toEpochMilli());
+
+    private final long id;
+    private final long creationTime;
+    private final long amountCents;
+    private final PaymentMethod paymentMethod;
+    private final LocalDate date;
+    private final String category;
+    private final String note;
+    private final MemberModel paidBy;
+    private final List<MemberModel> sharedBy;
+
+    public ExpenseModel(long amountCents,
+            PaymentMethod paymentMethod,
+            LocalDate date,
+            String category,
+            String note,
+            MemberModel paidBy,
+            List<MemberModel> sharedBy) {
+        if (amountCents <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("Payment method cannot be null");
+        }
+        if (date == null) {
+            throw new IllegalArgumentException("Date cannot be null");
+        }
+        if (category == null || category.trim().isEmpty()) {
+            throw new IllegalArgumentException("Category cannot be null or empty");
+        }
+        if (paidBy == null) {
+            throw new IllegalArgumentException("Payer cannot be null");
+        }
+        if (sharedBy == null || sharedBy.isEmpty()) {
+            throw new IllegalArgumentException("An expense must be shared by at least one member");
+        }
+        this.id = SEQUENCE.incrementAndGet();
+        this.creationTime = Instant.now().toEpochMilli();
+        this.amountCents = amountCents;
+        this.paymentMethod = paymentMethod;
+        this.date = date;
+        this.category = category.trim();
+        this.note = note == null ? "" : note.trim();
+        this.paidBy = paidBy;
+        this.sharedBy = Collections.unmodifiableList(new ArrayList<>(sharedBy));
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
+    /** The total of the expense, in whole cents. */
+    public long getAmountCents() {
+        return amountCents;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    /** The optional note, or an empty string when none was given. */
+    public String getNote() {
+        return note;
+    }
+
+    public MemberModel getPaidBy() {
+        return paidBy;
+    }
+
+    /** The members who share this expense. The list cannot be modified. */
+    public List<MemberModel> getSharedBy() {
+        return sharedBy;
+    }
+}

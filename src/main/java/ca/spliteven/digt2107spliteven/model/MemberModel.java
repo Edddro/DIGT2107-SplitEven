@@ -15,4 +15,18 @@ public class MemberModel {
         this.creationTime = Instant.now().toEpochMilli();
         this.name = name;
     }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    /** Shown wherever a member appears in a list or a drop-down. */
+    @Override
+    public String toString() {
+        return name;
+    }
 }

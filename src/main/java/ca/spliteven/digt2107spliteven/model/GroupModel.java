@@ -34,7 +34,7 @@ public class GroupModel {
         return members;
     }
 
-    void addMember(MemberModel member) {
+    public void addMember(MemberModel member) {
         this.members.add(member);
     }
 

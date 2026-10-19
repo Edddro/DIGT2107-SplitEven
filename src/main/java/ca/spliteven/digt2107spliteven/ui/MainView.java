@@ -10,42 +10,42 @@ import javafx.scene.layout.BorderPane;
 
 public class MainView implements Observer {
 
-//    private final Stage stage;
     private final Button addGroup =  new Button("Add Group");
+    private final Button addExpense = new Button("Add Expense");
+    private final ObservableList<GroupModel> groups = FXCollections.observableArrayList();
+    private final ListView<GroupModel> listView = createListView(groups);
     private final BorderPane root;
 
     public MainView() {
-//        this.stage = stage;
         final ToolBar toolBar = new ToolBar(
-                addGroup
+                addGroup,
+                addExpense
         );
-        // Just testing this out:
-        ObservableList<GroupModel> names = FXCollections.observableArrayList(
-                new GroupModel("Test")
-        );
-        ListView<GroupModel> listView = createListView(names);
+
+        // Nothing to add an expense to until a group is picked.
+        addExpense.disableProperty().bind(
+                listView.getSelectionModel().selectedItemProperty().isNull());
+        listView.setPlaceholder(new Label("No groups yet."));
 
         final BorderPane root = new BorderPane();
         this.root = root;
         root.setTop(toolBar);
         root.setCenter(listView);
-
     }
 
-    // Just testing this out:
-    private static ListView<GroupModel> createListView(ObservableList<GroupModel> names) {
-        ListView<GroupModel> listView = new ListView<GroupModel>(names);
-        listView.setCellFactory(p -> new ListCell() {
+    private static ListView<GroupModel> createListView(ObservableList<GroupModel> groups) {
+        ListView<GroupModel> listView = new ListView<GroupModel>(groups);
+        listView.setCellFactory(p -> new ListCell<GroupModel>() {
 
                 @Override
-                protected void updateItem(Object item, boolean empty) {
-                    GroupModel groupModel = (GroupModel) item;
-                    super.updateItem(item, empty);
+                protected void updateItem(GroupModel groupModel, boolean empty) {
+                    super.updateItem(groupModel, empty);
 
-                    if (item == null || empty) {
-                        // ...
+                    if (groupModel == null || empty) {
+                        setText(null);
                     } else {
-                        setText(groupModel.getName());
+                        setText(groupModel.getName()
+                                + "  (" + groupModel.getMembers().size() + " members)");
                     }
                 }
         });
@@ -56,9 +56,22 @@ public class MainView implements Observer {
         return addGroup;
     }
 
+    public Button getAddExpense() {
+        return addExpense;
+    }
+
+    /** The group the user has picked, or null when none is selected. */
+    public GroupModel getSelectedGroup() {
+        return listView.getSelectionModel().getSelectedItem();
+    }
+
     @Override
-    public void update(GroupService group) {
-        // TODO
+    public void update(GroupService service) {
+        final GroupModel selected = getSelectedGroup();
+        groups.setAll(service.getGroups());
+        if (selected != null && groups.contains(selected)) {
+            listView.getSelectionModel().select(selected);
+        }
     }
 
     public BorderPane getRoot() {

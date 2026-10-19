@@ -17,6 +17,13 @@ public class MainController {
             // TODO open CreateGroupView to create a group.
             navigator.showAddGroup();
         });
+
+        view.getAddExpense().setOnAction(event -> {
+            final GroupModel group = view.getSelectedGroup();
+            if (group != null) {
+                navigator.showAddExpense(group);
+            }
+        });
     }
 
 

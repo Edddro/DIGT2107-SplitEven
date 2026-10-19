@@ -1,9 +1,10 @@
 package ca.spliteven.digt2107spliteven.ui;
 
-import ca.spliteven.digt2107spliteven.mock.MockOpeningData;
-import ca.spliteven.digt2107spliteven.mock.MockOpeningData.Person;
 import ca.spliteven.digt2107spliteven.model.GroupModel;
+import ca.spliteven.digt2107spliteven.model.MemberModel;
+import ca.spliteven.digt2107spliteven.service.BalanceService;
 import ca.spliteven.digt2107spliteven.service.GroupService;
+import ca.spliteven.digt2107spliteven.service.Money;
 import ca.spliteven.digt2107spliteven.service.Observer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,7 +17,7 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
-import java.util.List;
+import java.util.Map;
 
 public class MainView implements Observer {
 
@@ -25,9 +26,11 @@ public class MainView implements Observer {
     private final ObservableList<GroupModel> groups = FXCollections.observableArrayList();
     private final ListView<GroupModel> listView = createListView(groups);
     private final VBox balances = new VBox(12);
+    private final BalanceService balanceService;
     private final BorderPane root;
 
-    public MainView() {
+    public MainView(BalanceService balanceService) {
+        this.balanceService = balanceService;
         final ToolBar toolBar = new ToolBar(
                 addGroup,
                 addExpense,
@@ -96,25 +99,34 @@ public class MainView implements Observer {
         return root;
     }
 
+    /** Lists each member of the selected group as owed, owing or settled. */
     private void showBalances() {
         balances.getChildren().clear();
-        GroupModel selected = getSelectedGroup();
-        List<Person> people = selected == null || selected.getMembers().isEmpty()
-                ? List.of()
-                : MockOpeningData.people();
-        if (people.isEmpty()) {
+        final GroupModel selected = getSelectedGroup();
+        if (selected == null) {
             balances.getChildren().add(new Label("Everyone is settled."));
             return;
         }
-        for (Person person : people) {
-            Label heading = new Label(person.getName() + "  " + person.getTotal());
-            heading.setStyle("-fx-font-weight: bold");
-            
-            VBox block = new VBox(2, heading);
-            for (String line : person.getLines()) {
-                block.getChildren().add(new Label(line));
+
+        boolean allSettled = true;
+        final Map<MemberModel, Long> balancesByMember = balanceService.balancesFor(selected);
+        for (Map.Entry<MemberModel, Long> entry : balancesByMember.entrySet()) {
+            final String name = entry.getKey().getName();
+            final long cents = entry.getValue();
+            final Label line;
+            if (cents > 0) {
+                line = new Label(name + " is owed $" + Money.format(cents));
+                allSettled = false;
+            } else if (cents < 0) {
+                line = new Label(name + " owes $" + Money.format(-cents));
+                allSettled = false;
+            } else {
+                line = new Label(name + " is settled up");
             }
-            balances.getChildren().add(block);
+            balances.getChildren().add(line);
+        }
+        if (allSettled) {
+            balances.getChildren().add(0, new Label("Everyone is settled."));
         }
     }
 }

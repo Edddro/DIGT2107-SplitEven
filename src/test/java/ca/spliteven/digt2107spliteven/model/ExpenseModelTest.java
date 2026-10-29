@@ -15,12 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Tests for the expense record itself (GE-002, FR-004).
+ * Tests for the expense record itself.
  *
- * <p>The checks here are the safety net behind
- * {@code ExpenseValidator}: by the time an expense is built the input has already
- * been checked, so anything caught here is a bug in our own code rather than
- * something a user typed.</p>
  */
 class ExpenseModelTest {
 

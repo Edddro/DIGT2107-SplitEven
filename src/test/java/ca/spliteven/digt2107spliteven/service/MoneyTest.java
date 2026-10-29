@@ -38,7 +38,7 @@ class MoneyTest {
     }
 
     @ParameterizedTest(name = "TC-003: \"{0}\" is rejected as an amount")
-    @ValueSource(strings = {"", "   ", "abc", "-5", "12.345", "1.2.3", "12,34", "1e5", "."})
+    @ValueSource(strings = {"", "   ", "abc", "-5", "12.345", "1.2.3", "12,34", "1 2", "1e5", "."})
     void rejectsAmountsItCannotStoreExactly(String text) {
         assertFalse(Money.isValidAmount(text));
         assertThrows(IllegalArgumentException.class, () -> Money.parseToCents(text));

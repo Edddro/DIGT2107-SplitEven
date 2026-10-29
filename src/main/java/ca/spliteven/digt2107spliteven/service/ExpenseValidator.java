@@ -115,7 +115,7 @@ public class ExpenseValidator {
             return false;
         }
         for (MemberModel candidate : group.getMembers()) {
-            if (candidate == member) {
+            if (candidate.getId().equals(member.getId())) {
                 return true;
             }
         }

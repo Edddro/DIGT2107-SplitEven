@@ -18,9 +18,8 @@ public class ExpenseService {
 
     private final GroupService groupService;
     private final ExpenseValidator validator;
-    // Keyed by the group object rather than its id: GroupModel hands out ids from
-    // the current millisecond, so two groups made in quick succession can share
-    // one.
+    // Keyed by the group object itself rather than its id, so this map does not
+    // depend on how GroupModel chooses to identify a group.
     private final Map<GroupModel, List<ExpenseModel>> expensesByGroup = new IdentityHashMap<>();
 
     public ExpenseService(GroupService groupService) {

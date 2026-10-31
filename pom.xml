@@ -6,7 +6,7 @@
 
     <groupId>ca.spliteven</groupId>
     <artifactId>DIGT2107-SplitEven</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>DIGT2107-SplitEven</name>
 
     <properties>
@@ -74,7 +74,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>ca.spliteven.digt2107spliteven/ca.spliteven.digt2107spliteven.SplitEven
+                            <mainClass>ca.spliteven.digt2107spliteven.Launcher
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>

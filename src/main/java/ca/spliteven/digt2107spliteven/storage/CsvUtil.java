@@ -1,4 +1,4 @@
-package splitseven.storage;
+package ca.spliteven.digt2107spliteven.storage;
 
 import java.util.ArrayList;
 import java.util.List;

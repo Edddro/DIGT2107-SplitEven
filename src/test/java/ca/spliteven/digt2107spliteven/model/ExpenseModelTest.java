@@ -35,8 +35,8 @@ class ExpenseModelTest {
     }
 
     @Test
-    @DisplayName("TC-029: an expense holds exactly what it was given")
-    void holdsItsDetails() {
+    @DisplayName("TC-007: an expense preserves its details")
+    void tc007_preservesExpenseDetails() {
         ExpenseModel saved = expense(4000L, Arrays.asList(adam, claire));
 
         assertEquals(4000L, saved.getAmountCents());
@@ -49,8 +49,8 @@ class ExpenseModelTest {
     }
 
     @Test
-    @DisplayName("TC-030: a missing note becomes an empty string, never null")
-    void turnsAMissingNoteIntoAnEmptyString() {
+    @DisplayName("TC-008: a missing note is saved as empty")
+    void tc008_savesAnEmptyNoteWhenNoneIsGiven() {
         ExpenseModel saved = new ExpenseModel(4000L, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", null, adam, Collections.singletonList(adam));
 
@@ -58,7 +58,7 @@ class ExpenseModelTest {
     }
 
     @Test
-    @DisplayName("TC-031: two expenses never share an id")
+    @DisplayName("Supplementary: expenses have unique IDs")
     void givesEveryExpenseItsOwnId() {
         ExpenseModel first = expense(1000L, Collections.singletonList(adam));
         ExpenseModel second = expense(1000L, Collections.singletonList(adam));
@@ -67,7 +67,7 @@ class ExpenseModelTest {
     }
 
     @Test
-    @DisplayName("TC-032: changing the list passed in does not change the saved expense")
+    @DisplayName("Supplementary: changing the input list does not change the expense")
     void copiesTheListOfSharers() {
         List<MemberModel> sharedBy = new ArrayList<>(Arrays.asList(adam, claire));
         ExpenseModel saved = expense(4000L, sharedBy);
@@ -78,7 +78,7 @@ class ExpenseModelTest {
     }
 
     @Test
-    @DisplayName("TC-033: the saved list of sharers cannot be modified")
+    @DisplayName("Supplementary: saved sharers cannot be modified")
     void sharersCannotBeModified() {
         ExpenseModel saved = expense(4000L, Arrays.asList(adam, claire));
 
@@ -86,7 +86,7 @@ class ExpenseModelTest {
     }
 
     @Test
-    @DisplayName("TC-034: an expense cannot be built from details the checks would have blocked")
+    @DisplayName("Supplementary: invalid expense details are rejected")
     void refusesDetailsThatShouldNeverReachIt() {
         assertThrows(IllegalArgumentException.class,
                 () -> expense(0L, Collections.singletonList(adam)));

@@ -62,8 +62,8 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-021: a valid expense is saved and appears in the history")
-    void savesAValidExpense() {
+    @DisplayName("TC-007: a valid expense is saved with its details")
+    void tc007_savesAValidExpenseWithItsDetails() {
         ValidationResult result = expenseService.add(group, validInput("40.00"));
 
         assertTrue(result.isValid());
@@ -82,16 +82,16 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-022: saving an expense tells the screens to refresh")
-    void notifiesObserversAfterASave() {
+    @DisplayName("TC-026: saving an expense refreshes observers")
+    void tc026_notifiesObserversAfterASave() {
         expenseService.add(group, validInput("40.00"));
 
         assertEquals(1, observer.updates);
     }
 
     @Test
-    @DisplayName("TC-023: an invalid expense saves nothing and refreshes nothing")
-    void savesNothingWhenTheInputIsInvalid() {
+    @DisplayName("TC-014: a refused expense changes nothing")
+    void tc014_savesNothingWhenTheInputIsInvalid() {
         ValidationResult result = expenseService.add(group,
                 new ExpenseInput("0", null, null, null, "", "", Collections.<MemberModel>emptyList()));
 
@@ -101,7 +101,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-024: expenses are kept in the order they were added")
+    @DisplayName("Supplementary: expenses are kept in insertion order")
     void keepsExpensesInOrder() {
         expenseService.add(group, validInput("10.00"));
         expenseService.add(group, validInput("20.00"));
@@ -116,7 +116,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-025: an expense belongs to one group only")
+    @DisplayName("Supplementary: expenses are kept separate by group")
     void keepsGroupsApart() {
         GroupModel trip = new GroupModel("Montreal trip");
         MemberModel edward = new MemberModel("Edward");
@@ -134,7 +134,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-026: a group with no expenses has an empty history, not a crash")
+    @DisplayName("Supplementary: a new group has an empty expense history")
     void returnsAnEmptyHistoryForANewGroup() {
         GroupModel empty = new GroupModel("Book club");
 
@@ -143,7 +143,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-027: the history cannot be modified from outside the service")
+    @DisplayName("Supplementary: callers cannot modify expense history")
     void historyCannotBeModified() {
         expenseService.add(group, validInput("40.00"));
 
@@ -154,7 +154,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    @DisplayName("TC-028: a missing group or submission is a programming error, not a message")
+    @DisplayName("Supplementary: null group or submission is rejected")
     void rejectsNullArguments() {
         assertThrows(NullPointerException.class, () -> expenseService.add(null, validInput("40.00")));
         assertThrows(NullPointerException.class, () -> expenseService.add(group, null));

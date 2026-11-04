@@ -1,18 +1,22 @@
+import ca.spliteven.digt2107spliteven.model.ExpenseModel;
+import ca.spliteven.digt2107spliteven.model.GroupModel;
+import ca.spliteven.digt2107spliteven.model.MemberModel;
+import ca.spliteven.digt2107spliteven.model.PaymentMethod;
+import ca.spliteven.digt2107spliteven.model.PaymentModel;
+import ca.spliteven.digt2107spliteven.service.ExpenseInput;
+import ca.spliteven.digt2107spliteven.service.ExpenseService;
+import ca.spliteven.digt2107spliteven.service.GroupService;
+import ca.spliteven.digt2107spliteven.service.ValidationResult;
+import ca.spliteven.digt2107spliteven.storage.CsvStorage;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.io.TempDir;
-import splitseven.controller.DataController;
-import splitseven.model.AppData;
-import splitseven.model.Expense;
-import splitseven.model.Group;
-import splitseven.model.Member;
-import splitseven.model.Payment;
-import splitseven.storage.CsvStorage;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,115 +26,115 @@ class Test {
     @TempDir
     Path temporaryDirectory;
 
-    private AppData createSampleData() {
-        AppData sampleData = AppData.empty();
-        Group roommatesGroup = Group.create("Roommates, \"Apt 4\"");
-        Member ana = Member.create("Ana");
-        Member bo = Member.create("Bo");
-        roommatesGroup.addMember(ana);
-        roommatesGroup.addMember(bo);
-        sampleData.groups().add(roommatesGroup);
-        sampleData.groups().add(Group.create("Empty group"));
+    private GroupModel createStandardGroup(GroupService groupService) {
+        GroupModel group = new GroupModel("Apartment 4B");
+        group.addMember(new MemberModel("Ana"));
+        group.addMember(new MemberModel("Ben"));
+        group.addMember(new MemberModel("Cai"));
+        groupService.addGroup(group);
+        return group;
+    }
 
-        Map<String, Long> groceryShares = new LinkedHashMap<>();
-        groceryShares.put(ana.id(), 501L);
-        groceryShares.put(bo.id(), 500L);
-        Expense groceryExpense = new Expense(
-                "e1",
-                roommatesGroup.getId(),
-                ana.id(),
-                1001,
-                "Cash",
-                LocalDate.of(2026, 10, 1),
+    private ExpenseModel addStandardExpense(GroupService groupService, GroupModel group) {
+        List<MemberModel> members = group.getMembers();
+        ExpenseInput input = new ExpenseInput(
+                "45.00",
+                members.get(0),
+                PaymentMethod.DEBIT,
+                LocalDate.of(2026, 10, 20),
                 "Groceries",
-                "milk, eggs\nand \"bread\"",
-                groceryShares);
-        sampleData.expenses().add(groceryExpense);
-
-        Expense otherExpense = new Expense(
-                "e2",
-                roommatesGroup.getId(),
-                bo.id(),
-                200,
-                "Card",
-                LocalDate.of(2026, 10, 2),
-                "Other",
-                "",
-                new LinkedHashMap<>(Map.of(ana.id(), 200L)));
-        sampleData.expenses().add(otherExpense);
-
-        Payment repayment = new Payment(
-                "p1",
-                roommatesGroup.getId(),
-                bo.id(),
-                ana.id(),
-                300,
-                "Cash",
-                LocalDate.of(2026, 10, 3));
-        sampleData.payments().add(repayment);
-
-        return sampleData;
+                "No Frills run",
+                members);
+        ExpenseService expenseService = new ExpenseService(groupService);
+        ValidationResult result = expenseService.add(group, input);
+        assertTrue(result.isValid());
+        return expenseService.expensesFor(group).get(0);
     }
 
     @org.junit.jupiter.api.Test
-    void savingAndLoadingReturnsEqualData() throws IOException {
-        AppData originalData = createSampleData();
+    @DisplayName("TC-019: Changes are saved straight away")
+    void tc019_changesAreSavedStraightAway() throws IOException {
         CsvStorage storage = new CsvStorage(temporaryDirectory);
-        storage.save(originalData);
+        GroupService groupService = new GroupService(storage);
+        GroupModel group = createStandardGroup(groupService);
+        addStandardExpense(groupService, group);
 
-        AppData loadedData = storage.load();
-
-        assertEquals(originalData, loadedData);
+        assertTrue(Files.exists(temporaryDirectory.resolve("groups.csv")));
+        assertTrue(Files.exists(temporaryDirectory.resolve("members.csv")));
+        assertTrue(Files.exists(temporaryDirectory.resolve("expenses.csv")));
+        assertTrue(Files.exists(temporaryDirectory.resolve("payments.csv")));
+        GroupService reloadedGroupService = new GroupService(storage);
+        GroupModel reloadedGroup = reloadedGroupService.getGroups().get(0);
+        assertEquals(1, reloadedGroupService.getGroups().size());
+        assertEquals(3, reloadedGroup.getMembers().size());
+        assertEquals(1, new ExpenseService(reloadedGroupService).countFor(reloadedGroup));
+        assertEquals(4500L, new ExpenseService(reloadedGroupService)
+                .expensesFor(reloadedGroup).get(0).getAmountCents());
     }
 
     @org.junit.jupiter.api.Test
-    void loadingWithoutSavedFilesReturnsEmptyData() throws IOException {
-        Path missingDataDirectory = temporaryDirectory.resolve("missing");
-        AppData loadedData = new CsvStorage(missingDataDirectory).load();
-
-        assertTrue(loadedData.groups().isEmpty());
-        assertTrue(loadedData.expenses().isEmpty());
-        assertTrue(loadedData.payments().isEmpty());
-    }
-
-    @org.junit.jupiter.api.Test
-    void savingCreatesCsvFileForEachDataType() throws IOException {
+    @DisplayName("TC-020: Data reloads exactly")
+    void tc020_dataReloadsExactly() throws IOException {
         CsvStorage storage = new CsvStorage(temporaryDirectory);
-        storage.save(createSampleData());
+        GroupService originalGroupService = new GroupService(storage);
+        GroupModel originalGroup = createStandardGroup(originalGroupService);
+        List<MemberModel> originalMembers = originalGroup.getMembers();
+        ExpenseInput expenseInput = new ExpenseInput(
+                "45.00",
+                originalMembers.get(0),
+                PaymentMethod.DEBIT,
+                LocalDate.of(2026, 10, 20),
+                "Groceries",
+                "No Frills, \"weekly\" run",
+                Arrays.asList(originalMembers.get(0), originalMembers.get(2)));
+        assertTrue(new ExpenseService(originalGroupService).add(originalGroup, expenseInput).isValid());
+        PaymentModel originalPayment = new PaymentModel(
+                originalMembers.get(1), originalMembers.get(0), 1500);
+        originalGroupService.addPayment(originalGroup, originalPayment);
+        ExpenseModel originalExpense = new ExpenseService(originalGroupService)
+                .expensesFor(originalGroup).get(0);
 
-        String[] csvFileNames = {
-                "groups.csv",
-                "members.csv",
-                "expenses.csv",
-                "payments.csv"
-        };
-        for (String csvFileName : csvFileNames) {
-            assertTrue(Files.exists(temporaryDirectory.resolve(csvFileName)), csvFileName);
+        GroupService reloadedGroupService = new GroupService(storage);
+        GroupModel reloadedGroup = reloadedGroupService.getGroups().get(0);
+        ExpenseModel reloadedExpense = new ExpenseService(reloadedGroupService)
+                .expensesFor(reloadedGroup).get(0);
+        PaymentModel reloadedPayment = reloadedGroupService
+                .getPayments(reloadedGroup).get(0);
+
+        assertEquals(originalGroup.getId(), reloadedGroup.getId());
+        assertEquals(originalGroup.getName(), reloadedGroup.getName());
+        assertEquals(originalMembers.size(), reloadedGroup.getMembers().size());
+        for (int memberIndex = 0; memberIndex < originalMembers.size(); memberIndex++) {
+            assertEquals(originalMembers.get(memberIndex).getId(),
+                    reloadedGroup.getMembers().get(memberIndex).getId());
+            assertEquals(originalMembers.get(memberIndex).getName(),
+                    reloadedGroup.getMembers().get(memberIndex).getName());
         }
+        assertEquals(originalExpense.getId(), reloadedExpense.getId());
+        assertEquals(originalExpense.getCreationTime(), reloadedExpense.getCreationTime());
+        assertEquals(originalExpense.getAmountCents(), reloadedExpense.getAmountCents());
+        assertEquals(originalExpense.getPaymentMethod(), reloadedExpense.getPaymentMethod());
+        assertEquals(originalExpense.getDate(), reloadedExpense.getDate());
+        assertEquals(originalExpense.getCategory(), reloadedExpense.getCategory());
+        assertEquals(originalExpense.getNote(), reloadedExpense.getNote());
+        assertEquals(originalExpense.getPaidBy().getId(), reloadedExpense.getPaidBy().getId());
+        assertEquals(2, reloadedExpense.getSharedBy().size());
+        assertEquals(originalExpense.getSharedBy().get(0).getId(),
+                reloadedExpense.getSharedBy().get(0).getId());
+        assertEquals(originalExpense.getSharedBy().get(1).getId(),
+                reloadedExpense.getSharedBy().get(1).getId());
+        assertEquals(originalPayment.getPaidBy().getId(), reloadedPayment.getPaidBy().getId());
+        assertEquals(originalPayment.getPaidTo().getId(), reloadedPayment.getPaidTo().getId());
+        assertEquals(originalPayment.getAmountCents(), reloadedPayment.getAmountCents());
     }
 
     @org.junit.jupiter.api.Test
-    void savingAgainReplacesPreviouslySavedData() throws IOException {
-        CsvStorage storage = new CsvStorage(temporaryDirectory);
-        storage.save(createSampleData());
-        storage.save(AppData.empty());
+    @DisplayName("TC-021: First start with no data")
+    void tc021_firstStartWithNoData() throws IOException {
+        Path emptyDataDirectory = temporaryDirectory.resolve("empty");
+        GroupService groupService = new GroupService(new CsvStorage(emptyDataDirectory));
 
-        assertTrue(storage.load().groups().isEmpty());
-    }
-
-    @org.junit.jupiter.api.Test
-    void controllerSavesChangesSoTheyAreAvailableAfterRestart() throws IOException {
-        DataController firstController = new DataController(
-                new CsvStorage(temporaryDirectory));
-        Group tripGroup = firstController.addGroup("Trip");
-        Member cy = firstController.addMember(tripGroup, "Cy");
-
-        DataController reopenedController = new DataController(
-                new CsvStorage(temporaryDirectory));
-
-        assertEquals(1, reopenedController.getGroups().size());
-        Group savedGroup = reopenedController.getGroups().get(0);
-        assertEquals(tripGroup, savedGroup);
-        assertEquals(cy, savedGroup.getMembers().get(0));
+        assertTrue(groupService.getGroups().isEmpty());
+        assertFalse(Files.exists(emptyDataDirectory));
     }
 }

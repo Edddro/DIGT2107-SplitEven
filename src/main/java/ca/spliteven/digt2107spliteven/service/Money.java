@@ -25,7 +25,11 @@ public final class Money {
         if (text == null) {
             return "";
         }
-        return text.trim().replace("$", "").replace(" ", "");
+        String cleaned = text.trim();
+        if (cleaned.startsWith("$")) {
+            cleaned = cleaned.substring(1).trim();
+        }
+        return cleaned;
     }
 
     /** True when the text is an amount this app can store exactly. */

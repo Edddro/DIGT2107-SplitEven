@@ -1,22 +1,23 @@
 package ca.spliteven.digt2107spliteven.model;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class MemberModel {
-    private final long id;
+    private final UUID id;
     private final long creationTime;
     private String name;
 
     public MemberModel(String name) {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Member name cannot be blank");
         }
-        this.id = Instant.now().toEpochMilli();
+        this.id = UUID.randomUUID();
         this.creationTime = Instant.now().toEpochMilli();
         this.name = name;
     }
 
-    public long getId() {
+    public UUID getId() {
         return id;
     }
 

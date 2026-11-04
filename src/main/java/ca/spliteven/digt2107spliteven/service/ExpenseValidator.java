@@ -45,12 +45,23 @@ public class ExpenseValidator {
     private void checkAmount(ExpenseInput input, List<ValidationError> errors) {
         String amountText = input.getAmountText();
         if (amountText == null || amountText.trim().isEmpty()) {
-            errors.add(new ValidationError(ExpenseField.AMOUNT, "Enter an amount."));
+            errors.add(new ValidationError(ExpenseField.AMOUNT, "Enter an amount"));
             return;
         }
         if (!Money.isValidAmount(amountText)) {
-            errors.add(new ValidationError(ExpenseField.AMOUNT,
-                    "Enter an amount like 12.34, using at most two decimal places."));
+            String cleanedAmount = amountText.trim();
+            if (cleanedAmount.startsWith("$")) {
+                cleanedAmount = cleanedAmount.substring(1).trim();
+            }
+            String message;
+            if (cleanedAmount.matches("-\\d+(\\.\\d{1,2})?")) {
+                message = "Amount must be greater than $0.00";
+            } else if (cleanedAmount.matches("\\d+\\.\\d{3,}")) {
+                message = "Use at most two decimal places";
+            } else {
+                message = "Enter a valid amount";
+            }
+            errors.add(new ValidationError(ExpenseField.AMOUNT, message));
             return;
         }
         long cents;
@@ -61,7 +72,8 @@ public class ExpenseValidator {
             return;
         }
         if (cents <= 0) {
-            errors.add(new ValidationError(ExpenseField.AMOUNT, "Amount must be greater than zero."));
+            errors.add(new ValidationError(ExpenseField.AMOUNT,
+                    "Amount must be greater than $0.00"));
         }
     }
 
@@ -77,13 +89,13 @@ public class ExpenseValidator {
 
     private void checkPaymentMethod(ExpenseInput input, List<ValidationError> errors) {
         if (input.getPaymentMethod() == null) {
-            errors.add(new ValidationError(ExpenseField.PAYMENT_METHOD, "Choose a payment method."));
+            errors.add(new ValidationError(ExpenseField.PAYMENT_METHOD, "Choose a payment method"));
         }
     }
 
     private void checkDate(ExpenseInput input, List<ValidationError> errors) {
         if (input.getDate() == null) {
-            errors.add(new ValidationError(ExpenseField.DATE, "Enter a valid date."));
+            errors.add(new ValidationError(ExpenseField.DATE, "Enter a valid date"));
         }
     }
 
@@ -97,8 +109,7 @@ public class ExpenseValidator {
     private void checkSharedBy(GroupModel group, ExpenseInput input, List<ValidationError> errors) {
         List<MemberModel> sharedBy = input.getSharedBy();
         if (sharedBy == null || sharedBy.isEmpty()) {
-            errors.add(new ValidationError(ExpenseField.SHARED_BY,
-                    "Choose at least one member who shares this expense."));
+            errors.add(new ValidationError(ExpenseField.SHARED_BY, "Select at least one member"));
             return;
         }
         for (MemberModel member : sharedBy) {
@@ -115,7 +126,7 @@ public class ExpenseValidator {
             return false;
         }
         for (MemberModel candidate : group.getMembers()) {
-            if (candidate == member) {
+            if (candidate.getId().equals(member.getId())) {
                 return true;
             }
         }

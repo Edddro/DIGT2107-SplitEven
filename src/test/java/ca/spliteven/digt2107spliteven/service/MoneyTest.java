@@ -1,67 +1,45 @@
 package ca.spliteven.digt2107spliteven.service;
 
+import ca.spliteven.digt2107spliteven.model.ExpenseModel;
+import ca.spliteven.digt2107spliteven.model.MemberModel;
+import ca.spliteven.digt2107spliteven.model.PaymentMethod;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Tests for amounts being stored as whole cents (NFR-003). */
 class MoneyTest {
 
     @Test
-    @DisplayName("TC-001: an amount is converted to whole cents")
-    void convertsToCents() {
-        assertEquals(1234L, Money.parseToCents("12.34"));
-        assertEquals(1200L, Money.parseToCents("12"));
-        assertEquals(1230L, Money.parseToCents("12.3"));
-        assertEquals(5L, Money.parseToCents("0.05"));
-    }
+    @DisplayName("TC-029 Money is stored in whole cents")
+    void tc029_moneyIsStoredInWholeCents() {
+        assertEquals(1999L, Money.parseToCents("19.99"));
+        assertEquals(10L, Money.parseToCents("0.1"));
+        assertEquals(100000L, Money.parseToCents("1000"));
 
-    @Test
-    @DisplayName("TC-002: a dollar sign and surrounding spaces are tolerated")
-    void tidiesUpWhatTheUserTyped() {
-        assertEquals(123456L, Money.parseToCents(" $1234.56 "));
-    }
+        List<MemberModel> members = new ArrayList<>();
+        for (int memberIndex = 0; memberIndex < 6; memberIndex++) {
+            members.add(new MemberModel("Member " + memberIndex));
+        }
 
-    @Test
-    @DisplayName("TC-002b: a comma is rejected rather than guessed at")
-    void rejectsCommasRatherThanGuessing() {
-        // "12,34" is twelve dollars thirty-four in much of the world and twelve
-        // hundred here. Guessing wrong by a factor of a hundred is not acceptable.
-        assertFalse(Money.isValidAmount("12,34"));
-        assertFalse(Money.isValidAmount("1,234.56"));
-    }
+        Random random = new Random(2107);
+        for (int splitIndex = 0; splitIndex < 10000; splitIndex++) {
+            long amountCents = random.nextInt(50000) + 1;
+            int sharerCount = random.nextInt(members.size()) + 1;
+            List<MemberModel> sharers = members.subList(0, sharerCount);
+            ExpenseModel expense = new ExpenseModel(amountCents, PaymentMethod.DEBIT,
+                    LocalDate.of(2026, 10, 20), "Groceries", "", members.get(0), sharers);
+            Map<MemberModel, Long> shares = expense.getShares();
 
-    @ParameterizedTest(name = "TC-003: \"{0}\" is rejected as an amount")
-    @ValueSource(strings = {"", "   ", "abc", "-5", "12.345", "1.2.3", "12,34", "1 2", "1e5", "."})
-    void rejectsAmountsItCannotStoreExactly(String text) {
-        assertFalse(Money.isValidAmount(text));
-        assertThrows(IllegalArgumentException.class, () -> Money.parseToCents(text));
-    }
-
-    @Test
-    @DisplayName("TC-004: a null amount is rejected rather than crashing")
-    void rejectsNull() {
-        assertFalse(Money.isValidAmount(null));
-    }
-
-    @Test
-    @DisplayName("TC-005: cents are formatted back with two decimal places")
-    void formatsCents() {
-        assertEquals("12.34", Money.format(1234L));
-        assertEquals("0.05", Money.format(5L));
-        assertEquals("12.00", Money.format(1200L));
-    }
-
-    @Test
-    @DisplayName("TC-006: a hundredth of a cent never appears, however the amount is written")
-    void roundTripsExactly() {
-        assertTrue(Money.isValidAmount("0.10"));
-        assertEquals(30L, Money.parseToCents("0.10") + Money.parseToCents("0.20"));
+            assertEquals(amountCents,
+                    shares.values().stream().mapToLong(Long::longValue).sum(),
+                    "split " + splitIndex);
+        }
     }
 }

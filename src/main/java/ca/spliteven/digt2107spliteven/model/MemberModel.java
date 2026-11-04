@@ -9,8 +9,8 @@ public class MemberModel {
     private String name;
 
     public MemberModel(String name) {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Member name cannot be blank");
         }
         this.id = UUID.randomUUID();
         this.creationTime = Instant.now().toEpochMilli();

@@ -15,8 +15,8 @@ public class GroupModel {
     private final List<MemberModel> members = new ArrayList<>();
 
     public GroupModel(String name) {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Group name cannot be blank");
         }
         this.id = UUID.randomUUID();
         this.creationTime = Instant.now().toEpochMilli();

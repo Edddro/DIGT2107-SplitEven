@@ -32,6 +32,22 @@ public class ExpenseModel {
             String note,
             MemberModel paidBy,
             List<MemberModel> sharedBy) {
+        this(SEQUENCE.incrementAndGet(), Instant.now().toEpochMilli(), amountCents,
+                paymentMethod, date, category, note, paidBy, sharedBy);
+    }
+
+    public ExpenseModel(long id,
+            long creationTime,
+            long amountCents,
+            PaymentMethod paymentMethod,
+            LocalDate date,
+            String category,
+            String note,
+            MemberModel paidBy,
+            List<MemberModel> sharedBy) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID must be greater than zero");
+        }
         if (amountCents <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
@@ -50,8 +66,9 @@ public class ExpenseModel {
         if (sharedBy == null || sharedBy.isEmpty()) {
             throw new IllegalArgumentException("An expense must be shared by at least one member");
         }
-        this.id = SEQUENCE.incrementAndGet();
-        this.creationTime = Instant.now().toEpochMilli();
+        this.id = id;
+        this.creationTime = creationTime;
+        SEQUENCE.updateAndGet(current -> Math.max(current, id));
         this.amountCents = amountCents;
         this.paymentMethod = paymentMethod;
         this.date = date;

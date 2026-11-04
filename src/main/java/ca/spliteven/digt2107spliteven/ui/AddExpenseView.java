@@ -181,6 +181,11 @@ public class AddExpenseView {
         messageLabel.setText(message);
     }
 
+    public void showSaveError(String message) {
+        messageLabel.setStyle("-fx-text-fill: #b3261e;");
+        messageLabel.setText(message);
+    }
+
     public void clearMessages() {
         for (Label label : errorLabels.values()) {
             label.setText("");

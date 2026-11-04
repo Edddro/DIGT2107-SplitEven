@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -50,7 +51,7 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: with no expenses everyone is at zero")
+    @DisplayName("Supplementary: with no expenses everyone is at zero")
     void noExpensesMeansEveryoneIsSettled() {
         Map<MemberModel, Long> balances = calculate(Collections.emptyList(), Collections.emptyList());
 
@@ -61,8 +62,8 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: an equal split credits the payer and debits the others")
-    void equalSplitBetweenAllMembers() {
+    @DisplayName("TC-023: balances reflect one equal-split expense")
+    void tc023_equalSplitExpenseCalculatesBalances() {
         Map<MemberModel, Long> balances = calculate(
                 List.of(expense(adam, 3000L, adam, edward, francis)), Collections.emptyList());
 
@@ -72,7 +73,7 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: members who do not share an expense are not charged")
+    @DisplayName("Supplementary: members who do not share an expense are not charged")
     void unevenSplitAmongSomeMembers() {
         Map<MemberModel, Long> balances = calculate(
                 List.of(expense(adam, 5000L, adam, edward)), Collections.emptyList());
@@ -83,8 +84,8 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: an amount that does not divide evenly still adds up to zero")
-    void leftoverCentIsAssignedSoBalancesStayAtZero() {
+    @DisplayName("TC-017: equal split assigns leftover cents in member order")
+    void tc017_equalSplit_leftoverCent() {
         Map<MemberModel, Long> balances = calculate(
                 List.of(expense(adam, 1000L, adam, edward, francis)), Collections.emptyList());
 
@@ -96,31 +97,32 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: a payer who does not share the expense is owed all of it")
-    void payerNotSharingIsOwedTheFullAmount() {
+    @DisplayName("TC-018: the only sharer owes their full share when the payer is not sharing")
+    void tc018_singleSharerCanBeDifferentFromPayer() {
         Map<MemberModel, Long> balances = calculate(
-                List.of(expense(adam, 4000L, edward, francis)), Collections.emptyList());
+                List.of(expense(adam, 1200L, edward)), Collections.emptyList());
 
-        assertEquals(4000L, balances.get(adam));
-        assertEquals(-2000L, balances.get(edward));
-        assertEquals(-2000L, balances.get(francis));
+        assertEquals(1200L, balances.get(adam));
+        assertEquals(-1200L, balances.get(edward));
+        assertEquals(0L, balances.get(francis));
     }
 
     @Test
-    @DisplayName("BS-001: balances combine across several expenses")
-    void severalExpensesAreAddedTogether() {
+    @DisplayName("TC-024: balances combine expenses from several payers")
+    void tc024_balancesWithSeveralPayers() {
         Map<MemberModel, Long> balances = calculate(Arrays.asList(
                 expense(adam, 3000L, adam, edward, francis),
-                expense(edward, 1200L, adam, edward)), Collections.emptyList());
+                expense(edward, 5000L, edward, francis),
+                expense(francis, 1200L, adam, francis)), Collections.emptyList());
 
-        assertEquals(2000L - 600L, balances.get(adam));
-        assertEquals(-1000L + 600L, balances.get(edward));
-        assertEquals(-1000L, balances.get(francis));
+        assertEquals(1400L, balances.get(adam));
+        assertEquals(1500L, balances.get(edward));
+        assertEquals(-2900L, balances.get(francis));
         assertEquals(0L, sum(balances));
     }
 
     @Test
-    @DisplayName("BS-001: a payment reduces what the payer owes and what the receiver is owed")
+    @DisplayName("Supplementary: a payment reduces the debt")
     void paymentReducesTheDebt() {
         Map<MemberModel, Long> balances = calculate(
                 List.of(expense(adam, 3000L, adam, edward, francis)),
@@ -133,7 +135,7 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: paying the full debt settles both members")
+    @DisplayName("Supplementary: a full payment settles both members")
     void fullPaymentSettlesTheDebt() {
         Map<MemberModel, Long> balances = calculate(
                 List.of(expense(adam, 2000L, adam, edward)),
@@ -144,22 +146,39 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: balances add up to zero across mixed expenses and payments")
-    void balancesAlwaysAddUpToZero() {
-        List<ExpenseModel> expenses = new ArrayList<>(Arrays.asList(
-                expense(adam, 9999L, adam, edward, francis),
-                expense(francis, 101L, adam, francis),
-                expense(edward, 7L, adam, edward, francis)));
-        List<PaymentModel> payments = List.of(
-                new PaymentModel(francis, adam, 1234L),
-                new PaymentModel(adam, edward, 50L));
+    @DisplayName("TC-025: balances add up to zero after each of 500 fixed-seed expenses")
+    void tc025_balancesAlwaysAddUpToZero() {
+        List<MemberModel> sixMembers = new ArrayList<>();
+        for (int memberIndex = 0; memberIndex < 6; memberIndex++) {
+            sixMembers.add(new MemberModel("Member " + memberIndex));
+        }
 
-        assertEquals(0L, sum(calculate(expenses, payments)));
+        Random random = new Random(2107);
+        List<ExpenseModel> expenses = new ArrayList<>();
+        for (int expenseIndex = 0; expenseIndex < 500; expenseIndex++) {
+            MemberModel payer = sixMembers.get(random.nextInt(sixMembers.size()));
+            List<MemberModel> sharers = new ArrayList<>();
+            for (MemberModel member : sixMembers) {
+                if (random.nextBoolean()) {
+                    sharers.add(member);
+                }
+            }
+            if (sharers.isEmpty()) {
+                sharers.add(sixMembers.get(random.nextInt(sixMembers.size())));
+            }
+
+            long amountCents = random.nextInt(50000) + 1;
+            expenses.add(expense(payer, amountCents,
+                    sharers.toArray(new MemberModel[0])));
+            Map<MemberModel, Long> balances = BalanceService.calculate(
+                    sixMembers, expenses, Collections.emptyList());
+            assertEquals(0L, sum(balances), "balance after expense " + expenseIndex);
+        }
     }
 
     @Test
-    @DisplayName("BS-001: the service reads a group's balances from its saved expenses")
-    void serviceUsesTheGroupsExpenses() {
+    @DisplayName("TC-023: the service calculates balances from a group's expenses")
+    void tc023_serviceUsesTheGroupsExpenses() {
         GroupService groupService = new GroupService();
         ExpenseService expenseService = new ExpenseService(groupService);
         GroupModel group = new GroupModel("Apartment");
@@ -177,7 +196,7 @@ class BalanceServiceTest {
     }
 
     @Test
-    @DisplayName("BS-001: a payment must have a positive amount between two different members")
+    @DisplayName("Supplementary: a payment must be positive and between two different members")
     void invalidPaymentsAreRejected() {
         assertThrows(IllegalArgumentException.class, () -> new PaymentModel(adam, edward, 0L));
         assertThrows(IllegalArgumentException.class, () -> new PaymentModel(adam, adam, 100L));

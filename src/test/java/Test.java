@@ -52,7 +52,7 @@ class Test {
     }
 
     @org.junit.jupiter.api.Test
-    @DisplayName("TC-019: Changes are saved straight away")
+    @DisplayName("TC-019 Changes are saved straight away")
     void tc019_changesAreSavedStraightAway() throws IOException {
         CsvStorage storage = new CsvStorage(temporaryDirectory);
         GroupService groupService = new GroupService(storage);
@@ -73,7 +73,7 @@ class Test {
     }
 
     @org.junit.jupiter.api.Test
-    @DisplayName("TC-020: Data reloads exactly")
+    @DisplayName("TC-020 Data reloads exactly")
     void tc020_dataReloadsExactly() throws IOException {
         CsvStorage storage = new CsvStorage(temporaryDirectory);
         GroupService originalGroupService = new GroupService(storage);
@@ -129,7 +129,7 @@ class Test {
     }
 
     @org.junit.jupiter.api.Test
-    @DisplayName("TC-021: First start with no data")
+    @DisplayName("TC-021 First start with no data")
     void tc021_firstStartWithNoData() throws IOException {
         Path emptyDataDirectory = temporaryDirectory.resolve("empty");
         GroupService groupService = new GroupService(new CsvStorage(emptyDataDirectory));

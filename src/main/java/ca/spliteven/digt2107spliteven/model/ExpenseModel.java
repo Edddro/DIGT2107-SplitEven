@@ -5,7 +5,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * One expense paid by a member and shared by one or more members (GE-002,
@@ -13,9 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ExpenseModel {
 
-    private static final AtomicLong SEQUENCE = new AtomicLong(Instant.now().toEpochMilli());
-
-    private final long id;
+    private final UUID id;
     private final long creationTime;
     private final long amountCents;
     private final PaymentMethod paymentMethod;
@@ -32,11 +31,11 @@ public class ExpenseModel {
             String note,
             MemberModel paidBy,
             List<MemberModel> sharedBy) {
-        this(SEQUENCE.incrementAndGet(), Instant.now().toEpochMilli(), amountCents,
+        this(UUID.randomUUID(), Instant.now().toEpochMilli(), amountCents,
                 paymentMethod, date, category, note, paidBy, sharedBy);
     }
 
-    public ExpenseModel(long id,
+    public ExpenseModel(UUID id,
             long creationTime,
             long amountCents,
             PaymentMethod paymentMethod,
@@ -45,9 +44,7 @@ public class ExpenseModel {
             String note,
             MemberModel paidBy,
             List<MemberModel> sharedBy) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID must be greater than zero");
-        }
+        Objects.requireNonNull(id, "id");
         if (amountCents <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
@@ -68,7 +65,6 @@ public class ExpenseModel {
         }
         this.id = id;
         this.creationTime = creationTime;
-        SEQUENCE.updateAndGet(current -> Math.max(current, id));
         this.amountCents = amountCents;
         this.paymentMethod = paymentMethod;
         this.date = date;
@@ -78,7 +74,7 @@ public class ExpenseModel {
         this.sharedBy = Collections.unmodifiableList(new ArrayList<>(sharedBy));
     }
 
-    public long getId() {
+    public UUID getId() {
         return id;
     }
 

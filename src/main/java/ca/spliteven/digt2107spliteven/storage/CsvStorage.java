@@ -20,13 +20,31 @@ import java.util.UUID;
 
 /** Stores groups, members, expenses, and payments in separate local CSV files. */
 public class CsvStorage implements Storage {
-    private static final List<String> GROUP_HEADER = List.of("id", "name");
-    private static final List<String> MEMBER_HEADER = List.of("id", "groupId", "name");
+    private static final String ID = "id";
+    private static final String NAME = "name";
+    private static final String GROUP_ID = "groupId";
+    private static final String CREATION_TIME = "creationTime";
+    private static final String AMOUNT_CENTS = "amountCents";
+    private static final String PAYMENT_METHOD = "paymentMethod";
+    private static final String DATE = "date";
+    private static final String CATEGORY = "category";
+    private static final String NOTE = "note";
+    private static final String PAID_BY_ID = "paidById";
+    private static final String PAID_TO_ID = "paidToId";
+    private static final String SHARED_BY_IDS = "sharedByIds";
+
+    private static final String GROUP_FILE = "groups.csv";
+    private static final String MEMBER_FILE = "members.csv";
+    private static final String EXPENSE_FILE = "expenses.csv";
+    private static final String PAYMENT_FILE = "payments.csv";
+
+    private static final List<String> GROUP_HEADER = List.of(ID, NAME);
+    private static final List<String> MEMBER_HEADER = List.of(ID, GROUP_ID, NAME);
     private static final List<String> EXPENSE_HEADER = List.of(
-            "id", "creationTime", "groupId", "amountCents", "paymentMethod",
-            "date", "category", "note", "paidById", "sharedByIds");
+            ID, CREATION_TIME, GROUP_ID, AMOUNT_CENTS, PAYMENT_METHOD,
+            DATE, CATEGORY, NOTE, PAID_BY_ID, SHARED_BY_IDS);
     private static final List<String> PAYMENT_HEADER = List.of(
-            "groupId", "paidById", "paidToId", "amountCents");
+            GROUP_ID, PAID_BY_ID, PAID_TO_ID, AMOUNT_CENTS);
 
     private final Path dataDirectory;
 
@@ -52,7 +70,7 @@ public class CsvStorage implements Storage {
             }
             for (ExpenseModel expense : appData.getExpenses(group)) {
                 expenseRows.add(List.of(
-                        Long.toString(expense.getId()),
+                        expense.getId().toString(),
                         Long.toString(expense.getCreationTime()),
                         group.getId().toString(),
                         Long.toString(expense.getAmountCents()),
@@ -72,10 +90,10 @@ public class CsvStorage implements Storage {
             }
         }
 
-        writeCsvFile("groups.csv", GROUP_HEADER, groupRows);
-        writeCsvFile("members.csv", MEMBER_HEADER, memberRows);
-        writeCsvFile("expenses.csv", EXPENSE_HEADER, expenseRows);
-        writeCsvFile("payments.csv", PAYMENT_HEADER, paymentRows);
+        writeCsvFile(GROUP_FILE, GROUP_HEADER, groupRows);
+        writeCsvFile(MEMBER_FILE, MEMBER_HEADER, memberRows);
+        writeCsvFile(EXPENSE_FILE, EXPENSE_HEADER, expenseRows);
+        writeCsvFile(PAYMENT_FILE, PAYMENT_HEADER, paymentRows);
     }
 
     @Override
@@ -84,14 +102,14 @@ public class CsvStorage implements Storage {
         Map<UUID, GroupModel> groupsById = new HashMap<>();
         Map<UUID, MemberModel> membersById = new HashMap<>();
 
-        for (List<String> groupRow : readCsvFile("groups.csv")) {
+        for (List<String> groupRow : readCsvFile(GROUP_FILE)) {
             UUID groupId = parseUuid(groupRow.get(0), "group id");
             GroupModel group = new GroupModel(groupId, groupRow.get(1));
             groupsById.put(groupId, group);
             appData.addGroup(group);
         }
 
-        for (List<String> memberRow : readCsvFile("members.csv")) {
+        for (List<String> memberRow : readCsvFile(MEMBER_FILE)) {
             UUID groupId = parseUuid(memberRow.get(1), "member group id");
             GroupModel group = requireGroup(groupsById, groupId);
             MemberModel member = new MemberModel(
@@ -100,13 +118,13 @@ public class CsvStorage implements Storage {
             membersById.put(member.getId(), member);
         }
 
-        for (List<String> expenseRow : readCsvFile("expenses.csv")) {
+        for (List<String> expenseRow : readCsvFile(EXPENSE_FILE)) {
             UUID groupId = parseUuid(expenseRow.get(2), "expense group id");
             GroupModel group = requireGroup(groupsById, groupId);
             MemberModel payer = requireMember(membersById, expenseRow.get(8));
             List<MemberModel> sharers = decodeMembers(expenseRow.get(9), membersById);
             ExpenseModel expense = new ExpenseModel(
-                    Long.parseLong(expenseRow.get(0)),
+                    parseExpenseId(expenseRow.get(0)),
                     Long.parseLong(expenseRow.get(1)),
                     Long.parseLong(expenseRow.get(3)),
                     PaymentMethod.valueOf(expenseRow.get(4)),
@@ -118,7 +136,7 @@ public class CsvStorage implements Storage {
             appData.expensesFor(group).add(expense);
         }
 
-        for (List<String> paymentRow : readCsvFile("payments.csv")) {
+        for (List<String> paymentRow : readCsvFile(PAYMENT_FILE)) {
             UUID groupId = parseUuid(paymentRow.get(0), "payment group id");
             GroupModel group = requireGroup(groupsById, groupId);
             MemberModel payer = requireMember(membersById, paymentRow.get(1));
@@ -211,6 +229,24 @@ public class CsvStorage implements Storage {
             return UUID.fromString(value);
         } catch (IllegalArgumentException error) {
             throw new IOException("Invalid " + fieldName + " in saved data: " + value, error);
+        }
+    }
+
+    private static UUID parseExpenseId(String value) throws IOException {
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException invalidUuid) {
+            try {
+                long legacyId = Long.parseLong(value);
+                if (legacyId <= 0) {
+                    throw new NumberFormatException("ID must be greater than zero");
+                }
+                // Older CSV files used numeric expense IDs; keep their mapping stable on reload.
+                String legacyKey = "spliteven:expense:" + legacyId;
+                return UUID.nameUUIDFromBytes(legacyKey.getBytes(StandardCharsets.UTF_8));
+            } catch (NumberFormatException invalidId) {
+                throw new IOException("Invalid expense id in saved data: " + value, invalidId);
+            }
         }
     }
 }

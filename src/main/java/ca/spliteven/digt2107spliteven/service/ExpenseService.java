@@ -61,10 +61,9 @@ public class ExpenseService {
             expensesByGroup.put(group, expenses);
         }
         expenses.add(expense);
-
-        groupService.notifyObservers();
         // eventually this will likely need to be more robust to handle editing/deleting expenses
         group.addExpenses(expense);
+        groupService.updateGroup(group);
         return result;
     }
 

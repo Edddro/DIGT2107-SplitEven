@@ -18,6 +18,7 @@ public class ExpenseService {
 
     private final GroupService groupService;
     private final ExpenseValidator validator;
+    // TODO This expensesByGroup should probably be tied to the actual GroupModel like how the MemberModel is.
     // Keyed by the group object itself rather than its id, so this map does not
     // depend on how GroupModel chooses to identify a group.
     private final Map<GroupModel, List<ExpenseModel>> expensesByGroup = new IdentityHashMap<>();
@@ -62,6 +63,8 @@ public class ExpenseService {
         expenses.add(expense);
 
         groupService.notifyObservers();
+        // eventually this will likely need to be more robust to handle editing/deleting expenses
+        group.addExpenses(expense);
         return result;
     }
 

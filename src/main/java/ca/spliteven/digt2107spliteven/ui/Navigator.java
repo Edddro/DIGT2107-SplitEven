@@ -9,7 +9,7 @@ public class Navigator {
     private final BorderPane shell;
     private final GroupService service;
     private final ExpenseService expenseService;
-    private final MainView mainView;                  // built ONCE: it's an observer
+    private final MainView mainView;
 
     public Navigator(GroupService service, ExpenseService expenseService, BorderPane shell) {
         this.shell = shell;

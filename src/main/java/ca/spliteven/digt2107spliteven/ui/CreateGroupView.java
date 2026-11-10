@@ -20,7 +20,6 @@ public class CreateGroupView {
 
     public CreateGroupView() {
         this.root = new BorderPane();
-        ToolBar toolBar = new ToolBar(cancelButton);
         cancelButton.setCancelButton(true); // accessibility + keyboard
         final ToolBar toolBar = new ToolBar(cancelButton, saveButton);
         final Label groupNameLabel = new Label("Group Name");
@@ -78,10 +77,6 @@ public class CreateGroupView {
 
     public TextField getMemberNameField() {
         return memberNameField;
-    }
-
-    public Button getDeleteMemberButton() {
-        return deleteMemberButton;
     }
 
     private static Label errorLabel() {

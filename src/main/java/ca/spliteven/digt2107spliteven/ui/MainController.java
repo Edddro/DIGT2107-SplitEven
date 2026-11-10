@@ -14,7 +14,6 @@ public class MainController {
         this.navigator = navigator;
 
         view.getAddGroup().setOnAction(event -> {
-            // TODO open CreateGroupView to create a group.
             navigator.showAddGroup();
         });
 

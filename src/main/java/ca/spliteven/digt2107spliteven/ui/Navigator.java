@@ -1,6 +1,7 @@
 package ca.spliteven.digt2107spliteven.ui;
 
 import ca.spliteven.digt2107spliteven.model.GroupModel;
+import ca.spliteven.digt2107spliteven.service.BalanceService;
 import ca.spliteven.digt2107spliteven.service.ExpenseService;
 import ca.spliteven.digt2107spliteven.service.GroupService;
 import javafx.scene.layout.BorderPane;
@@ -15,7 +16,7 @@ public class Navigator {
         this.shell = shell;
         this.service = service;
         this.expenseService = expenseService;
-        this.mainView = new MainView();
+        this.mainView = new MainView(new BalanceService(expenseService));
         service.addObserver(mainView);
         new MainController(service, mainView, this); // add this?
     }

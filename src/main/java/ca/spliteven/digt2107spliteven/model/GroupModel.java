@@ -17,10 +17,17 @@ public class GroupModel {
     private final List<ExpenseModel> expenses = new ArrayList<>();
 
     public GroupModel(String name) {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
+        this(UUID.randomUUID(), name);
+    }
+
+    public GroupModel(UUID id, String name) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID cannot be null");
         }
-        this.id = UUID.randomUUID();
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Group name cannot be blank");
+        }
+        this.id = id;
         this.creationTime = Instant.now().toEpochMilli();
         this.name = name;
     }

@@ -16,8 +16,8 @@ public class MemberModel {
         if (id == null) {
             throw new IllegalArgumentException("ID cannot be null");
         }
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Member name cannot be blank");
         }
         this.id = id;
         this.creationTime = Instant.now().toEpochMilli();

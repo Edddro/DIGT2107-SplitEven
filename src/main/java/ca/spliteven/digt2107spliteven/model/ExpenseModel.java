@@ -4,7 +4,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -106,6 +108,18 @@ public class ExpenseModel {
 
     public MemberModel getPaidBy() {
         return paidBy;
+    }
+
+    /** How much each person owes, split equally in cents
+     *  If it doesn't divide evenly, the first people each pay one extra cent */
+    public Map<MemberModel, Long> getShares() {
+        long baseShare = amountCents / sharedBy.size();
+        long leftoverCents = amountCents % sharedBy.size();
+        Map<MemberModel, Long> shares = new LinkedHashMap<>();
+        for (int i = 0; i < sharedBy.size(); i++) {
+            shares.put(sharedBy.get(i), baseShare + (i < leftoverCents ? 1 : 0));
+        }
+        return shares;
     }
 
     /** The members who share this expense. The list cannot be modified. */

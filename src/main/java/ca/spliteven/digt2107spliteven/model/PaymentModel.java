@@ -2,6 +2,7 @@ package ca.spliteven.digt2107spliteven.model;
 
 /** Money paid by one member to another to settle a debt, in whole cents. */
 public class PaymentModel {
+
     private final MemberModel paidBy;
     private final MemberModel paidTo;
     private final long amountCents;

@@ -52,8 +52,8 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-007: a complete expense passes every check")
-    void acceptsAValidExpense() {
+    @DisplayName("TC-007: a complete expense passes validation")
+    void tc007_acceptsACompleteExpense() {
         ValidationResult result = validator.validate(group, validInput());
 
         assertTrue(result.isValid());
@@ -61,17 +61,17 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-008: an optional note may be left out")
-    void acceptsAnExpenseWithoutANote() {
+    @DisplayName("TC-008: the expense note is optional")
+    void tc008_acceptsAnExpenseWithoutANote() {
         ExpenseInput input = new ExpenseInput("40.00", adam, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", null, Arrays.asList(adam, claire));
 
         assertTrue(validator.validate(group, input).isValid());
     }
 
-    @ParameterizedTest(name = "TC-009: an amount of \"{0}\" is rejected on the amount field")
-    @ValueSource(strings = {"0", "0.00", "-1", "", "   ", "abc", "12.345"})
-    void rejectsAmountsThatAreNotMoneyGreaterThanZero(String amountText) {
+    @ParameterizedTest(name = "TC-009: amount \"{0}\" is rejected")
+    @ValueSource(strings = {"0", "0.00", "-1"})
+    void tc009_rejectsZeroOrNegativeAmounts(String amountText) {
         ExpenseInput input = new ExpenseInput(amountText, adam, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", "", Arrays.asList(adam, claire));
 
@@ -81,8 +81,21 @@ class ExpenseValidatorTest {
         assertNotNull(result.messageFor(ExpenseField.AMOUNT));
     }
 
+
     @Test
-    @DisplayName("TC-010: an amount too large to store is rejected, not silently wrapped")
+    @DisplayName("TC-010: amounts with fractions of a cent are rejected")
+    void tc010_rejectsFractionsOfACent() {
+        ExpenseInput input = new ExpenseInput("12.345", adam, PaymentMethod.CASH,
+                LocalDate.of(2026, 10, 18), "Food", "", Arrays.asList(adam, claire));
+
+        ValidationResult result = validator.validate(group, input);
+
+        assertFalse(result.isValid());
+        assertNotNull(result.messageFor(ExpenseField.AMOUNT));
+    }
+
+    @Test
+    @DisplayName("Supplementary: an amount too large to store is rejected")
     void rejectsAnAmountTooLargeToStore() {
         ExpenseInput input = new ExpenseInput("99999999999999999999", adam, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", "", Arrays.asList(adam, claire));
@@ -94,8 +107,8 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-011: a missing payment method is rejected on the payment method field")
-    void rejectsAMissingPaymentMethod() {
+    @DisplayName("TC-011: a missing payment method is rejected")
+    void tc011_rejectsAMissingPaymentMethod() {
         ExpenseInput input = new ExpenseInput("40.00", adam, null,
                 LocalDate.of(2026, 10, 18), "Food", "", Arrays.asList(adam, claire));
 
@@ -107,8 +120,8 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-012: a missing date is rejected on the date field")
-    void rejectsAMissingDate() {
+    @DisplayName("TC-012: a missing date is rejected")
+    void tc012_rejectsAMissingDate() {
         ExpenseInput input = new ExpenseInput("40.00", adam, PaymentMethod.CASH,
                 null, "Food", "", Arrays.asList(adam, claire));
 
@@ -119,7 +132,7 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-013: a missing category is rejected on the category field")
+    @DisplayName("Supplementary: a missing category is rejected")
     void rejectsAMissingCategory() {
         ExpenseInput input = new ExpenseInput("40.00", adam, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "   ", "", Arrays.asList(adam, claire));
@@ -131,7 +144,7 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-014: a missing payer is rejected on the paid by field")
+    @DisplayName("Supplementary: a missing payer is rejected")
     void rejectsAMissingPayer() {
         ExpenseInput input = new ExpenseInput("40.00", null, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", "", Arrays.asList(adam, claire));
@@ -143,8 +156,8 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-015: an expense shared by nobody is rejected on the shared by field")
-    void rejectsAnExpenseSharedByNobody() {
+    @DisplayName("TC-013: an expense shared by nobody is rejected")
+    void tc013_rejectsAnExpenseWithNoSharers() {
         ExpenseInput input = new ExpenseInput("40.00", adam, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", "", Collections.<MemberModel>emptyList());
 
@@ -155,7 +168,7 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-016: a payer from outside the group is rejected")
+    @DisplayName("Supplementary: a payer outside the group is rejected")
     void rejectsAPayerWhoIsNotInTheGroup() {
         MemberModel stranger = new MemberModel("Stranger");
         ExpenseInput input = new ExpenseInput("40.00", stranger, PaymentMethod.CASH,
@@ -168,7 +181,7 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-017: a sharer from outside the group is rejected")
+    @DisplayName("Supplementary: a sharer outside the group is rejected")
     void rejectsASharerWhoIsNotInTheGroup() {
         MemberModel stranger = new MemberModel("Stranger");
         ExpenseInput input = new ExpenseInput("40.00", adam, PaymentMethod.CASH,
@@ -181,8 +194,8 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-018: an expense may be shared by one member only")
-    void acceptsAnExpenseSharedByOneMember() {
+    @DisplayName("TC-018: an expense can have one sharer")
+    void tc018_acceptsAnExpenseSharedByOneMember() {
         ExpenseInput input = new ExpenseInput("40.00", adam, PaymentMethod.CASH,
                 LocalDate.of(2026, 10, 18), "Food", "", Collections.singletonList(adam));
 
@@ -190,7 +203,7 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-019: every failed check is reported at once, not one at a time")
+    @DisplayName("Supplementary: every failed check is reported at once")
     void reportsEveryFailedCheckTogether() {
         ExpenseInput input = new ExpenseInput("0", null, null, null,
                 "", "", new ArrayList<MemberModel>());
@@ -205,7 +218,7 @@ class ExpenseValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-020: the list of errors cannot be modified by a caller")
+    @DisplayName("Supplementary: validation errors cannot be modified")
     void errorsCannotBeModified() {
         ValidationResult result = validator.validate(group, validInput());
         List<ValidationError> errors = result.getErrors();

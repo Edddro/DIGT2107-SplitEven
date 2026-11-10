@@ -4,6 +4,8 @@ import ca.spliteven.digt2107spliteven.model.GroupModel;
 import ca.spliteven.digt2107spliteven.service.ExpenseService;
 import ca.spliteven.digt2107spliteven.service.ValidationResult;
 
+import java.io.UncheckedIOException;
+
 /**
  * Wires the Add Expense form to the expense service.
  *
@@ -32,7 +34,13 @@ public class AddExpenseController {
     private void save() {
         view.clearMessages();
 
-        final ValidationResult result = expenseService.add(group, view.readValues());
+        final ValidationResult result;
+        try {
+            result = expenseService.add(group, view.readValues());
+        } catch (UncheckedIOException error) {
+            view.showSaveError("Could not save expense: " + error.getCause().getMessage());
+            return;
+        }
         if (!result.isValid()) {
             view.showErrors(result);
             return;

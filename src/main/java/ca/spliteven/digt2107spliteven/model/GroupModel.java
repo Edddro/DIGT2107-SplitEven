@@ -15,10 +15,17 @@ public class GroupModel {
     private final List<MemberModel> members = new ArrayList<>();
 
     public GroupModel(String name) {
+        this(UUID.randomUUID(), name);
+    }
+
+    public GroupModel(UUID id, String name) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID cannot be null");
+        }
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null or empty");
         }
-        this.id = UUID.randomUUID();
+        this.id = id;
         this.creationTime = Instant.now().toEpochMilli();
         this.name = name;
     }

@@ -14,6 +14,7 @@ import java.util.UUID;
 /** Snapshot of the existing application models that is read from or written to storage. */
 public class AppData {
     private final List<GroupModel> groups = new ArrayList<>();
+    // These indexes are populated while loading CSV rows and when groups are updated.
     private final Map<UUID, List<ExpenseModel>> expensesByGroup = new LinkedHashMap<>();
     private final Map<UUID, List<PaymentModel>> paymentsByGroup = new LinkedHashMap<>();
 
@@ -49,10 +50,12 @@ public class AppData {
         return paymentsByGroup.computeIfAbsent(groupId, key -> new ArrayList<>());
     }
 
+    /** Adds a loaded or new group to this in-memory snapshot. */
     void addGroup(GroupModel group) {
         groups.add(group);
     }
 
+    /** Removes a group and its related data when a save needs to be rolled back. */
     void removeGroup(GroupModel group) {
         groups.remove(group);
         expensesByGroup.remove(group.getId());

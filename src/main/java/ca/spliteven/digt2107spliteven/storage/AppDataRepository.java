@@ -9,7 +9,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-/** Loads the application models and persists each confirmed change. */
+/**
+ * Coordinates changes to the in-memory app data and persists each confirmed change.
+ * The models hold the data; this repository handles storage and rollback.
+ */
 public class AppDataRepository {
     private final Storage storage;
     private final AppData appData;

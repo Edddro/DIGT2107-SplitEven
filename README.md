@@ -8,6 +8,21 @@ Desktop expense-sharing app for roommates, trip groups, and small clubs. Users c
 
 (todo once project is setup)
 
+## Local data
+
+The app stores CSV files in `.spliteven` inside the current user's home directory
+by default. For example, on Windows this is `C:\Users\<name>\.spliteven`.
+Keeping app data outside the repository avoids accidentally committing personal
+data.
+
+To use a different folder while reviewing or testing, set the Java system
+property `spliteven.dataDir` to that folder in the run configuration.
+
+## Running tests
+
+Run the unit tests from the project directory with `sh mvnw clean test`. On
+Windows, use `.\mvnw.cmd clean test` in PowerShell.
+
 ## Repository layout
 
 ```

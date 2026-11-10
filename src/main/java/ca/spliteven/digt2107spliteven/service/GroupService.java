@@ -66,6 +66,11 @@ public class GroupService {
         notifyObservers();
     }
 
+    public void updateGroup(GroupModel group) {
+        notifyObservers();
+    }
+
+    /** Every group, in the order they were created. The list cannot be modified. */
     public List<GroupModel> getGroups() {
         return dataRepository.getGroups();
     }
@@ -82,7 +87,7 @@ public class GroupService {
         return dataRepository.getPayments(group);
     }
 
-    public void notifyObservers() {
+    private void notifyObservers() {
         for (Observer observer : observers) {
             observer.update(this);
         }

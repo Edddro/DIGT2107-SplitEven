@@ -1,6 +1,5 @@
 package ca.spliteven.digt2107spliteven.ui;
 
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;

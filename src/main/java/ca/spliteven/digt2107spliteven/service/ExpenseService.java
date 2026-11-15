@@ -9,10 +9,6 @@ import java.util.*;
 public class ExpenseService {
     private final GroupService groupService;
     private final ExpenseValidator validator;
-    // TODO This expensesByGroup should probably be tied to the actual GroupModel like how the MemberModel is.
-    // Keyed by the group object itself rather than its id, so this map does not
-    // depend on how GroupModel chooses to identify a group.
-    private final Map<GroupModel, List<ExpenseModel>> expensesByGroup = new IdentityHashMap<>();
 
     public ExpenseService(GroupService groupService) {
         this(groupService, new ExpenseValidator());
@@ -41,15 +37,7 @@ public class ExpenseService {
                 input.getPaidBy(),
                 input.getSharedBy());
 
-        List<ExpenseModel> expenses = expensesByGroup.get(group);
-        if (expenses == null) {
-            expenses = new ArrayList<>();
-            expensesByGroup.put(group, expenses);
-        }
-        expenses.add(expense);
-        // eventually this will likely need to be more robust to handle editing/deleting expenses
-        group.addExpenses(expense);
-        groupService.updateGroup(group);
+        groupService.addExpense(group, expense);
         return result;
     }
 

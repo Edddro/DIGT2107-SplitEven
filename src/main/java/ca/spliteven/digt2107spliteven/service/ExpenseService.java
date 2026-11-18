@@ -3,8 +3,7 @@ package ca.spliteven.digt2107spliteven.service;
 import ca.spliteven.digt2107spliteven.model.ExpenseModel;
 import ca.spliteven.digt2107spliteven.model.GroupModel;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /** Records expenses against a group and retrieves its saved expense history. */
 public class ExpenseService {
@@ -37,6 +36,7 @@ public class ExpenseService {
                 input.getNote(),
                 input.getPaidBy(),
                 input.getSharedBy());
+
         groupService.addExpense(group, expense);
         return result;
     }

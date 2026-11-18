@@ -41,9 +41,17 @@ public class GroupService {
 
     public void addMember(GroupModel group, MemberModel member) {
         try {
+            if (member.getId() == null) {
+                throw new IllegalArgumentException("ID cannot be null");
+            }
+            if (member.getName() == null || member.getName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Member name cannot be blank");
+            }
             dataRepository.addMember(group, member);
         } catch (IOException error) {
             throw new UncheckedIOException("Could not save group member", error);
+        } catch (IllegalArgumentException error) {
+            throw error;
         }
         notifyObservers();
     }
@@ -66,6 +74,7 @@ public class GroupService {
         notifyObservers();
     }
 
+    /** Every group, in the order they were created. The list cannot be modified. */
     public List<GroupModel> getGroups() {
         return dataRepository.getGroups();
     }
@@ -82,7 +91,7 @@ public class GroupService {
         return dataRepository.getPayments(group);
     }
 
-    public void notifyObservers() {
+    private void notifyObservers() {
         for (Observer observer : observers) {
             observer.update(this);
         }

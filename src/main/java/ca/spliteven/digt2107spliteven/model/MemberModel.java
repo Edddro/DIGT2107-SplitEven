@@ -37,4 +37,9 @@ public class MemberModel {
     public String toString() {
         return name;
     }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
 }

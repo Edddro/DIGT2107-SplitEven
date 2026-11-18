@@ -13,6 +13,8 @@ public class GroupModel {
     private final long creationTime;
     private String name;
     private final List<MemberModel> members = new ArrayList<>();
+    // TODO To be linked from ExpenseService:
+    private final List<ExpenseModel> expenses = new ArrayList<>();
 
     public GroupModel(String name) {
         this(UUID.randomUUID(), name);
@@ -42,8 +44,16 @@ public class GroupModel {
         return members;
     }
 
+    public List<ExpenseModel> getExpenses() {
+        return expenses;
+    }
+
     public void addMember(MemberModel member) {
         this.members.add(member);
+    }
+
+    public void addExpenses(ExpenseModel expenses) {
+        this.expenses.add(expenses);
     }
 
 }
